@@ -17,8 +17,8 @@ public interface AngerEvalAgent {
         Output strictly a single number representing the anger level, without any additional text or explanation.
         """)
     @UserMessage("""
-        Evaluate the anger level in the following test: {text} 
-                """)
+        Evaluate the anger level in the following test: {text}
+        """)
     @Agent(description = "Agent that evaluates the level of anger in a given text.", outputKey = "angerLevel")
     short angerEvaluation(String text);
 }
