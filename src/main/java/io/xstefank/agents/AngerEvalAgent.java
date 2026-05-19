@@ -3,6 +3,7 @@ package io.xstefank.agents;
 import dev.langchain4j.agentic.Agent;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 
 public interface AngerEvalAgent {
 
@@ -20,5 +21,6 @@ public interface AngerEvalAgent {
         Evaluate the anger level in the following test: {text}
         """)
     @Agent(description = "Agent that evaluates the level of anger in a given text.", outputKey = "angerLevel")
+    @Timeout(1)
     short angerEvaluation(String text);
 }
