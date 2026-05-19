@@ -1,0 +1,24 @@
+- name: Sample1
+  parameters:
+    - "My PR has been waiting for review since yesterday and it's a bit frustrating."
+  expected-output: "DR_BANNER responds calmly with constructive advice about the mild frustration"
+- name: Sample2
+  parameters:
+    - "Someone keeps leaving empty coffee pots in the kitchen."
+  expected-output: "HULK responds with rage about the empty coffee pots in the kitchen"
+- name: Sample3
+  parameters:
+    - "I've been debugging this null pointer for four hours and I'm losing my mind."
+  expected-output: "HULK responds with intense rage about the four-hour null pointer debugging struggle"
+- name: Sample4
+  parameters:
+    - "The CI pipeline failed again five minutes before the release."
+  expected-output: "HULK responds with extreme anger about the CI pipeline failure before the release"
+- name: Sample5
+  parameters:
+    - "SOMEONE PUSHED DIRECTLY TO MAIN AND BROKE PRODUCTION!!!"
+  expected-output: "HULK responds with maximum fury about someone pushing directly to main and breaking production"
+- name: Sample6
+  parameters:
+    - "THEY REWROTE MY SERVICE IN PHP FOR THREE MONTHS WITHOUT TELLING ME!"
+  expected-output: "HULK responds with extreme rage about the service being secretly rewritten in PHP"
