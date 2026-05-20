@@ -18,7 +18,7 @@ public interface SmashSufficiencyAgent {
 
         Take into account the provided analyzed anger level: {angerLevel}.
         If the anger level is too low (<= 3) prefer Dr. Banner.
-        If the anger level is too high (>= 7) prefer The Hulk. 
+        If the anger level is too high (>= 7) prefer The Hulk.
         
         Your output should be a single sentence summarizing the winning smashing response, without mentioning the name of the winner or any additional text
         prepended by either DR_BANNER or HULK to indicate whose response is being summarized.

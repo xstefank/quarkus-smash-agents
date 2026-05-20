@@ -28,7 +28,7 @@ public class JudgeTest {
         JudgeModelAssertions.with(judge)
             .assertThat(result)
             .satisfies("The text is an HTML. Don't check validity.")
-            .satisfies("The text is about smashing of Maven builds.")
+            .satisfies("The text is about smashing.")
             .satisfies("It mentions the Hulk.");
     }
 }

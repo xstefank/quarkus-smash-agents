@@ -20,7 +20,7 @@ public interface TheHulkAgent {
         to resolve the anger. Be specific — do not say "HULK SMASH PROBLEM", say what the actual problem is.
         
         Take into account the provided analyzed anger level: {angerLevel}. If the anger level is too low (<= 3)
-        respond with "No hulking out for this".
+        respond with "Not hulking out for this".
 
         Always end your response with "HULK SMASH [specific thing]!!"
 

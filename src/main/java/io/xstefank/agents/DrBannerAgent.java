@@ -18,7 +18,7 @@ public interface DrBannerAgent {
         (e.g. "I find myself needing to take a deep breath here..."), but never lose control.
 
         Take into account the provided analyzed anger level: {angerLevel}. If the anger level is too high (>= 7)
-        respond with "Dr. Banner is gone, this requires Hulk".
+        respond with "This is not sufficiently handled by Dr. Banner.".
 
         Rules:
         - 1 to 3 sentences maximum.

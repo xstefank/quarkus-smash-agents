@@ -35,7 +35,7 @@ public class EvaluationTest {
 
         EvaluationReport<String> report = scorer.evaluate(samples, function,
             new SemanticSimilarityStrategy(0.4));
-        report.saveAs(Path.of("semantic-similarity-report.md"), "markdown");
+        report.saveAs(Path.of("target/semantic-similarity-report.md"), "markdown");
         assertThat(report)
             .hasAtLeastPassedEvaluations(2)
             .hasScoreGreaterThan(30);
