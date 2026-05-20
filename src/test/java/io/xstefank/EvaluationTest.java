@@ -13,6 +13,8 @@ import io.xstefank.agents.AngerEvalWorkflow;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.function.Function;
 
 import static io.quarkiverse.langchain4j.testing.evaluation.EvaluationAssertions.assertThat;
@@ -27,12 +29,13 @@ public class EvaluationTest {
     @Test
     void testAiService(
         @ScorerConfiguration(concurrency = 5) Scorer scorer,
-        @SampleLocation("src/test/resources/samples.yaml") Samples<String> samples) {
+        @SampleLocation("src/test/resources/samples.yaml") Samples<String> samples) throws IOException {
 
         Function<Parameters, String> function = parameters -> angerEvalWorkflow.evaluateAngerAndHulkOut(parameters.get(0)).toString();
 
-        EvaluationReport report = scorer.evaluate(samples, function,
+        EvaluationReport<String> report = scorer.evaluate(samples, function,
             new SemanticSimilarityStrategy(0.4));
+        report.saveAs(Path.of("semantic-similarity-report.md"), "markdown");
         assertThat(report)
             .hasAtLeastPassedEvaluations(2)
             .hasScoreGreaterThan(30);
