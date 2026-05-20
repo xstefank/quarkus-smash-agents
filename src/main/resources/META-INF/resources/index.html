@@ -397,6 +397,102 @@
             letter-spacing: 0.12em;
             color: var(--muted);
         }
+
+        /* ── Pending verifications ───────────────── */
+        .pending-section {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 3rem;
+        }
+        .pending-section h2 {
+            text-align: center;
+            color: #f59e0b;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 1.2rem;
+            opacity: 0.9;
+        }
+        #pending-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .pending-item {
+            background: var(--card);
+            border: 2px solid #92400e;
+            border-radius: 12px;
+            overflow: hidden;
+            text-align: center;
+            animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .pending-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(245,158,11,0.3);
+        }
+        .pending-placeholder {
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pending-placeholder svg { width: 60%; height: auto; }
+        .pending-label {
+            padding: 0.5rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #f59e0b;
+        }
+
+        /* ── Verification overlay ────────────────── */
+        #verification-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        #verification-overlay.active { display: flex; }
+        #verification-card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--card);
+            border: 2px solid #92400e;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(245,158,11,0.2);
+            animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        #verification-card .result-header { color: #f59e0b; margin-bottom: 1.2rem; }
+        #verification-card .result-text   { margin-bottom: 1.6rem; }
+        .verify-actions { display: flex; gap: 1rem; }
+        .verify-btn {
+            flex: 1;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .verify-btn:hover { transform: scale(1.03); }
+        .verify-btn.approve { background: linear-gradient(135deg, #14532d, var(--green)); color: #000; }
+        .verify-btn.approve:hover { box-shadow: 0 0 16px rgba(74,222,128,0.4); }
+        .verify-btn.reject  { background: #7f1d1d; color: #fca5a5; }
+        .verify-btn.reject:hover  { box-shadow: 0 0 16px rgba(239,68,68,0.3); }
     </style>
     <script>
         function closeModal() {
@@ -407,22 +503,122 @@
             document.getElementById('result').innerHTML = el.dataset.popup;
             document.getElementById('result-overlay').classList.add('active');
         }
+
+        // Tracks how many /anger requests are currently in-flight
+        let activeSmashes = 0;
+
+        function handleSmash(e) {
+            e.preventDefault();
+            activeSmashes++;
+            document.getElementById('loading').classList.add('htmx-request');
+
+            fetch('/anger', { method: 'POST', body: new FormData(e.currentTarget) })
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    var tmp = document.createElement('div');
+                    tmp.innerHTML = html;
+
+                    // Process hx-swap-oob elements (e.g. history-container beforeend)
+                    tmp.querySelectorAll('[hx-swap-oob]').forEach(function (oob) {
+                        var target = document.getElementById(oob.id);
+                        if (target && oob.getAttribute('hx-swap-oob') === 'beforeend') {
+                            target.insertAdjacentHTML('beforeend', oob.innerHTML);
+                        }
+                        oob.remove();
+                    });
+
+                    var resultEl = document.getElementById('result');
+                    resultEl.innerHTML = tmp.innerHTML.trim();
+                    document.getElementById('result-overlay').classList.toggle('active', resultEl.innerHTML !== '');
+
+                    var card = resultEl.querySelector('[data-winner]');
+                    if (card) {
+                        var el = document.getElementById(card.dataset.winner + '-count');
+                        if (el) el.textContent = parseInt(el.textContent || '0') + 1;
+                    }
+                })
+                .catch(function (err) { console.error('Smash failed:', err); })
+                .finally(function () {
+                    activeSmashes--;
+                    if (activeSmashes === 0) document.getElementById('loading').classList.remove('htmx-request');
+                });
+        }
+
+        // ── Human-in-the-Loop: pending verifications ─────────────────────────
+        // Polls GET /smash-verification/pending every 2 s.
+        // Falls back silently if VerifySmashSummaryWorkflow is not wired into the sequence.
+
+        function addVerificationCard(v) {
+            const isHulk   = v.smashSummary.startsWith('HULK');
+            const symbolId = isHulk ? '#symbol-hulk' : '#symbol-banner';
+            const card = document.createElement('div');
+            card.className = 'pending-item';
+            card.id = 'pending-' + v.id;
+            card.onclick = () => showVerificationOverlay(v);
+            card.innerHTML = `
+                <div class="pending-placeholder">
+                    <svg viewBox="0 0 80 110"><use href="${symbolId}"/></svg>
+                </div>
+                <div class="pending-label">⏳ Awaiting verification</div>`;
+            document.getElementById('pending-container').appendChild(card);
+            document.querySelector('.pending-section').style.display = 'block';
+        }
+
+        function showVerificationOverlay(v) {
+            const isHulk     = v.smashSummary.startsWith('HULK');
+            const symbolId   = isHulk ? '#symbol-hulk' : '#symbol-banner';
+            const smasher    = isHulk ? 'THE HULK' : 'DR. BANNER';
+            const cleanText  = v.smashSummary.replace(/^(DR_BANNER|HULK)\s*/, '');
+            const card = document.getElementById('verification-card');
+            card.innerHTML = `
+                <div class="result-header">${smasher} RESPONDS</div>
+                <svg class="char-svg" viewBox="0 0 80 110"><use href="${symbolId}"/></svg>
+                <p class="result-text">${cleanText}</p>
+                <div class="verify-actions">
+                    <button class="verify-btn approve" onclick="verifySmash('APPROVED')">&#10003; Approve</button>
+                    <button class="verify-btn reject"  onclick="verifySmash('REJECTED')">&#10007; Reject</button>
+                </div>`;
+            document.getElementById('verification-overlay').dataset.verification = JSON.stringify(v);
+            document.getElementById('verification-overlay').classList.add('active');
+        }
+
+        async function verifySmash(status) {
+            const overlay = document.getElementById('verification-overlay');
+            const v       = JSON.parse(overlay.dataset.verification);
+            overlay.classList.remove('active');
+
+            const card = document.getElementById('pending-' + v.id);
+            if (card) card.remove();
+            const container = document.getElementById('pending-container');
+            if (!container.hasChildNodes()) document.querySelector('.pending-section').style.display = 'none';
+
+            try {
+                await fetch('/smash-verification/approve', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ ...v, status })
+                });
+                // The blocked /anger POST now unblocks; HTMX swaps the final result normally
+            } catch (_) { /* let the HTMX request surface any error */ }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('result-overlay').addEventListener('click', function (e) {
                 if (e.target === this) closeModal();
             });
-            document.body.addEventListener('htmx:afterSwap', function (e) {
-                if (e.detail.target.id === 'result') {
-                    document.getElementById('result-overlay').classList.toggle(
-                        'active', e.detail.target.innerHTML.trim() !== ''
-                    );
-                    const card = e.detail.target.querySelector('[data-winner]');
-                    if (card) {
-                        const el = document.getElementById(card.dataset.winner + '-count');
-                        if (el) el.textContent = parseInt(el.textContent || '0') + 1;
-                    }
-                }
-            });
+
+            // Poll for pending verifications every 2 s; ignored if endpoint is absent
+            setInterval(function () {
+                fetch('/smash-verification/pending')
+                    .then(function (r) { return r.ok ? r.json() : []; })
+                    .then(function (items) {
+                        items.forEach(function (v) {
+                            if (!document.getElementById('pending-' + v.id)) addVerificationCard(v);
+                        });
+                    })
+                    .catch(function (e) { console.error('Pending verification poll failed:', e); });
+            }, 2000);
+
         });
     </script>
 </head>
@@ -533,12 +729,7 @@
     <div class="form-card">
     <h2>⚡ Release Your Inner Rage ⚡</h2>
 
-    <form hx-post="/anger"
-          hx-target="#result"
-          hx-swap="innerHTML"
-          hx-encoding="multipart/form-data"
-          hx-indicator="#loading"
-          enctype="multipart/form-data">
+    <form enctype="multipart/form-data" onsubmit="handleSmash(event)">
 
         <div class="field">
             <label for="angerPreset">Quick-select anger</label>
@@ -592,6 +783,16 @@
 
 <div id="result-overlay">
     <div id="result"></div>
+</div>
+
+<!-- Human-in-the-Loop verification overlay -->
+<div id="verification-overlay">
+    <div id="verification-card"></div>
+</div>
+
+<div class="pending-section">
+    <h2>⏳ Pending Verifications ⏳</h2>
+    <div id="pending-container"></div>
 </div>
 
 <div class="history-section">
