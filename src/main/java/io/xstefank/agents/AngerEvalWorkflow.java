@@ -2,7 +2,6 @@ package io.xstefank.agents;
 
 import dev.langchain4j.agentic.declarative.Output;
 import dev.langchain4j.agentic.declarative.SequenceAgent;
-import io.xstefank.hitl.VerifySmashSummaryInUIWorkflow;
 import io.xstefank.model.Smasher;
 import io.xstefank.model.SmashingResponse;
 
@@ -12,7 +11,7 @@ public interface AngerEvalWorkflow {
     String BANNER_SVG = "<svg class=\"char-svg\" viewBox=\"0 0 80 110\"><use href=\"#symbol-banner\"/></svg>";
 
     @SequenceAgent(outputKey = "angerEvaluation",
-        subAgents = {AngerEvalAgent.class, HulkOutWorkflow.class, SmashSufficiencyAgent.class, VerifySmashSummaryInUIWorkflow.class})
+        subAgents = {AngerEvalAgent.class, HulkOutWorkflow.class, SmashSufficiencyAgent.class})
     SmashingResponse evaluateAngerAndHulkOut(String text);
 
     @Output

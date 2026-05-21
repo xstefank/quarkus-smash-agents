@@ -1,6 +1,7 @@
 package io.xstefank.exception;
 
 import io.quarkus.logging.Log;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -11,6 +12,9 @@ public class SmashExceptionMapper implements ExceptionMapper<RuntimeException> {
 
     @Override
     public Response toResponse(RuntimeException e) {
+        if (e instanceof WebApplicationException wae) {
+            return wae.getResponse();
+        }
         Log.errorf(e, "Smash processing failed: %s", e.getMessage());
         return Response.serverError()
                 .type(MediaType.TEXT_HTML)
