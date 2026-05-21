@@ -7,6 +7,8 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.xstefank.guardrails.IsNumberGuardrail;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 public class IsNumberGuardrailTest {
@@ -27,9 +29,14 @@ public class IsNumberGuardrailTest {
             .hasSingleFailureWithMessage("Output must be a number between 1 and 10. Please provide a single number in that range.");
     }
 
-    @Test
-    void testNumberInvalid() {
-        GuardrailAssertions.assertThat(isNumberGuardrail.validate(AiMessage.from("this is not a number")))
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "this is not a number",
+        "Forty two",
+        "3/14",
+    })
+    void testNumberInvalid(String output) {
+        GuardrailAssertions.assertThat(isNumberGuardrail.validate(AiMessage.from(output)))
             .hasResult(GuardrailResult.Result.FATAL)
             .hasSingleFailureWithMessage("Output is not a valid number. Please provide a single number without any additional text or explanation.");
     }
